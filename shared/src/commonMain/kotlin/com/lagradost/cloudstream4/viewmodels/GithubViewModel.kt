@@ -39,21 +39,27 @@ data class GithubDialog(
     val state: GithubUpdateDialogState,
 )
 
-/** GitHub file update package */
+/** GitHub or custom JSON file update package */
 @Immutable
 data class GithubFile(
     /** File digest, sha:xxx */
     val digest: String?,
     /** File url for download */
     val downloadUrl: String,
-    /** Filename without the extension */
+    /** Filename without the extension or version title */
     val displayName: String,
-    /** Changelog, aka the commit message */
+    /** Changelog, aka the commit message or release notes */
     val changeLog: String,
     /** Name of the tag, aka unique release name like vX.X.X or pre-release */
     val tagName: String,
     /** Unique node id */
     val nodeId: String,
+    /** Optional version code for numeric version comparison */
+    val versionCode: Int? = null,
+    /** Optional flag indicating if update is mandatory */
+    val mandatory: Boolean = false,
+    /** Optional size of the APK in bytes */
+    val apkSize: Long? = null,
 )
 
 @Immutable
@@ -162,6 +168,7 @@ class GithubViewModel(
     val settings: AppSettings,
     val updater: AppUpdater,
     val repository: GithubRepository,
+    val versionCode: Int = 0,
 ) : ViewModel(), StateContainer<GithubState> by DefaultStateContainer(GithubState()),
     ActionHandler<GithubAction> {
     private val updateDispatcher = SingleActiveQuery(Dispatchers.IO)
@@ -290,8 +297,15 @@ class GithubViewModel(
             contentType = remoteContentType
         )
 
-        // If on stable, only check that the display name matches
-        if (!prerelease && release.displayName == versionName) {
+        // If version code is provided, check if remote version code is greater than local
+        // Otherwise fallback to checking that display name / version name is different
+        val isNewer = if (release.versionCode != null && versionCode > 0) {
+            release.versionCode > versionCode
+        } else {
+            release.displayName != versionName
+        }
+
+        if (!prerelease && !isNewer) {
             updateState {
                 copy(dialog = baseDialog.copy(state = GithubUpdateDialogState.NoUpdateFound))
             }

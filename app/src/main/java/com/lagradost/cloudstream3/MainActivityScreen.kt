@@ -35,6 +35,7 @@ import com.lagradost.cloudstream3.utils.GitInfo.currentCommitHash
 import com.lagradost.cloudstream3.utils.parseMarkdown
 import com.lagradost.cloudstream4.compose.BlackButton
 import com.lagradost.cloudstream4.compose.Screen
+import com.lagradost.cloudstream3.ui.settings.JsonUpdateRepository
 import com.lagradost.cloudstream4.compose.WhiteButton
 import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.cloudstream4.viewmodels.GithubAction
@@ -63,12 +64,13 @@ object MainActivityScreen : Screen {
                 remotePrereleaseTag = APK_PRERELEASE,
                 remoteContentType = APK_CONTENT_TYPE,
                 versionName = BuildConfig.VERSION_NAME,
+                versionCode = BuildConfig.VERSION_CODE,
                 isPrerelease = BuildConfig.FLAVOR == "prerelease",
                 isDebug = BuildConfig.DEBUG,
                 buildSha = activity.currentCommitHash(),
                 settings = settings,
                 updater = ApkUpdater,
-                repository = GithubReleases,
+                repository = JsonUpdateRepository,
             ).apply {
                 /** Only search once per session when not in safe mode */
                 if (!hasSearchedForUpdate && !PluginManager.isSafeMode()) {
@@ -158,7 +160,7 @@ object MainActivityScreen : Screen {
             }
 
             is GithubUpdateDialogState.UpdateFound -> {
-                cancelable = true
+                cancelable = !state.file.mandatory
                 title = stringResource(
                     R.string.new_update_format,
                     (state.oldSha ?: BuildConfig.VERSION_NAME),
@@ -176,13 +178,15 @@ object MainActivityScreen : Screen {
                     })
                 }
                 dismissButton = {
-                    BlackButton(text = stringResource(R.string.skip_update), onClick = {
-                        onAction(SkipUpdate(state.file))
-                        onAction(Dismiss)
-                    })
-                    BlackButton(text = stringResource(R.string.cancel), onClick = {
-                        onAction(Dismiss)
-                    })
+                    if (!state.file.mandatory) {
+                        BlackButton(text = stringResource(R.string.skip_update), onClick = {
+                            onAction(SkipUpdate(state.file))
+                            onAction(Dismiss)
+                        })
+                        BlackButton(text = stringResource(R.string.cancel), onClick = {
+                            onAction(Dismiss)
+                        })
+                    }
                 }
             }
 

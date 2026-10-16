@@ -225,6 +225,7 @@ fabric.properties
 
 # Tooling and generated Knowledge Graph
 .agents/
+.claude/
 graphify-out/
 
 # --- PRIVATE REPO ONLY ---

@@ -8,6 +8,10 @@ object AppConfig {
 
     val VERSION: String get() = BuildConfig.VERSION_NAME
 
+    // Update Configurations
+    const val UPDATE_URL = "https://pub-e9a64ec2e4424ee6b04d9dac6a883b3b.r2.dev/update.json"
+    const val FALLBACK_UPDATE_URL = "https://raw.githubusercontent.com/sheikhshariarnehal/upstream/master/update.json"
+
     // Default Settings & Retry Configurations
     const val MAX_RETRIES = 4
     const val RETRY_DELAY_MS = 1500L
